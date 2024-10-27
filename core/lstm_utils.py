@@ -78,21 +78,18 @@ class MultivariateRNNModel(nn.Module):
         return output
 
 
-def train_contrastive(
-    model, data_loader, optimizer, contrastive_loss_fn, triplets, epochs=10, device="mps"
-):
+def train_contrastive(model, optimizer, contrastive_loss_fn, triplets, epochs=10, device="mps"):
     model.train()
-
     for epoch in range(epochs):
         running_loss = 0.0
         for batch in tqdm.tqdm(triplets):
 
-            input1, input2, negative = batch
+            anchor, positive, negative = batch
 
-            output1 = model(input1.unsqueeze(0).to(device))
-            output2 = model(input2.unsqueeze(0).to(device))
-            output3 = model(negative.unsqueeze(0).to(device))
-            loss = contrastive_loss_fn(output1, output2, output3)
+            anchor_emb = model(anchor.unsqueeze(0).to(device))
+            positive_emb = model(positive.unsqueeze(0).to(device))
+            negative_emb = model(negative.unsqueeze(0).to(device))
+            loss = contrastive_loss_fn(anchor_emb, positive_emb, negative_emb)
 
             optimizer.zero_grad()
             loss.backward()
@@ -100,6 +97,5 @@ def train_contrastive(
 
             running_loss += loss.item()
 
-        print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(data_loader)}")
-
+        print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(triplets)}")
     return model

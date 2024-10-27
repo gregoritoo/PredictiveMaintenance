@@ -37,7 +37,7 @@ def evaluate_model(X_test, y_test, model, inverse_custom_mapping, verbose=True):
     if hasattr(model, "predict_proba"):
         y_proba = model.predict_proba(X_test)
     else:
-        raise ValueError("Model must have a `predict_proba` method for AUC calculation.")
+        raise NotImplementedError
 
     y_predicted = model.predict(X_test)
 
