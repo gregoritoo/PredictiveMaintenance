@@ -32,7 +32,7 @@ def mark_danger_zone(df_data, alpha_predicitive_strengh=1):
     return df_data
 
 
-def evaluate_model(X_test, y_test, model, inverse_custom_mapping, verbose=True):
+def evaluate_model(X_test, y_test, model, inverse_custom_mapping, verbose=True, plot=True):
 
     if hasattr(model, "predict_proba"):
         y_proba = model.predict_proba(X_test)
@@ -62,7 +62,8 @@ def evaluate_model(X_test, y_test, model, inverse_custom_mapping, verbose=True):
             confusion_matrix=c_matrix,
             display_labels=[inverse_custom_mapping[x] for x in np.unique(y_test)],
         )
-        disp.plot()
+        if plot:
+            disp.plot()
     return balanced_acc
 
 
