@@ -44,11 +44,12 @@ class CustomDataset(Dataset):
     def __init__(self, X, y, transform=None, target_transform=None):
         self.X = X
         self.y = y
+        assert len(X) == len(y)
         self.transform = transform
         self.target_transform = target_transform
 
     def __len__(self):
-        return self.X.shape[0]
+        return len(self.X)
 
     def __getitem__(self, idx):
         return self.X[idx, :, :], self.y[idx]

@@ -2,6 +2,7 @@ import random
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import tqdm
 
 
@@ -24,17 +25,11 @@ def generate_triplets(x, y):
     return triplets
 
 
-class ContrastiveLoss(nn.Module):
-    def __init__(self, margin=1.0):
-        super(ContrastiveLoss, self).__init__()
-        self.margin = margin
-
-    def forward(self, output1, output2, label):
-        euclidean_distance = nn.functional.pairwise_distance(output1, output2)
-        loss = (1 - label) * torch.pow(euclidean_distance, 2) + (label) * torch.pow(
-            torch.clamp(self.margin - euclidean_distance, min=0.0), 2
-        )
-        return torch.mean(loss)
+def triplet_loss(anchor, positive, negative, margin=0.5):
+    pos_dist = torch.norm(anchor - positive, p=2, dim=1)
+    neg_dist = torch.norm(anchor - negative, p=2, dim=1)
+    loss = F.relu(pos_dist - neg_dist + margin)
+    return loss.mean()
 
 
 class MultivariateRNNModel(nn.Module):
@@ -78,7 +73,7 @@ class MultivariateRNNModel(nn.Module):
         return output
 
 
-def train_contrastive(model, optimizer, contrastive_loss_fn, triplets, epochs=10, device="mps"):
+def train_contrastive(model, optimizer, triplets, margin=0.5, epochs=10, device="mps"):
     model.train()
     for epoch in range(epochs):
         running_loss = 0.0
@@ -89,7 +84,7 @@ def train_contrastive(model, optimizer, contrastive_loss_fn, triplets, epochs=10
             anchor_emb = model(anchor.unsqueeze(0).to(device))
             positive_emb = model(positive.unsqueeze(0).to(device))
             negative_emb = model(negative.unsqueeze(0).to(device))
-            loss = contrastive_loss_fn(anchor_emb, positive_emb, negative_emb)
+            loss = triplet_loss(anchor_emb, positive_emb, negative_emb, margin=margin)
 
             optimizer.zero_grad()
             loss.backward()
